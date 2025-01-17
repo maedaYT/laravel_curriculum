@@ -12,7 +12,7 @@ class PostController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request)   // TOPページ表示
     {
         // モデルに対してクエリビルダを作成し、$query変数に代入してこのクエリビルダを使ってデータベースクエリを構築
         $query = Post::query();
@@ -59,7 +59,7 @@ class PostController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create()   // 新規投稿作成画面の表示
     {
         // 投稿画面表示
         return view('posts.create');
@@ -71,17 +71,21 @@ class PostController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request)   // 新規投稿の保存
     {
         // 投稿内容保存処理
         $post = Post::create([
+            'user_id' => Auth::id(),   // ログインユーザーのIDを保存
+            'post_id' => $request->post_id,
             'title' => $request->title,
             'check_in_date' => $request->check_in_date,
             'check_out_date' => $request->check_out_date,
             'guest_count' => $request->guest_count,
             'comment' => $request->comment,
-            'image' => $request->image,
+            'image' => $request->image->store('images', 'public'),   // 画像保存
         ]);
+
+        Auth::user()->update(['last_post_at' => now()]);
 
         return redirect()->route('posts.index');
     }
@@ -92,7 +96,7 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Int $id)
+    public function show(Int $id)   // 個別の投稿ページの表示
     {
         // ビューから渡されたIDの記事を取得
         $post = Post::find($id);
@@ -107,9 +111,11 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit($id)   // 投稿編集画面の表示
     {
-        //
+        // findOrFailで該当の投稿を取得
+        $post = Post::findOrFail($id);
+        return view('reservations.edit', compact('post'));
     }
 
     /**
@@ -119,9 +125,19 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id)   // 投稿の更新の保存
     {
-        //
+        // 編集画面からPUTメソッドで送信されたデータを受け取り、findOrFailで該当の予約を取得
+        // updateメソッドで特定のカラムを更新
+        $post = Post::findOrFail($id);
+        $post->update($request->only(['title', 'check_in_date', 'check_out_date', 'guest_count', 'price', 'comment']));
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('images', 'public');
+            $post->update(['image_url' => $path]);
+        }
+
+        return redirect()->route('mypage.index')->with('success', '投稿情報を更新しました！');
     }
 
     /**
@@ -130,8 +146,14 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($id)   // 投稿を削除
     {
-        //
+        // 削除確認画面からDELETEメソッドで送信されたデータを受け取り、findOrFailで該当の予約を取得
+        // deleteメソッドでデータを削除
+        $post = Post::findOrFail($id);
+        $post->delete();
+
+        return redirect()->route('mypage.index')->with('success', '投稿を削除しました！');
     }
+
 }

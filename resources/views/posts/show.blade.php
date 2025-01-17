@@ -28,8 +28,16 @@
     <!-- アクションボタン -->
     <div class="text-center">
         <a href="{{ route('posts.index') }}" class="btn btn-secondary me-3">ホームに戻る</a>
-        <a href="" class="btn btn-danger me-3">違反報告</a>
-        <a href="" class="btn btn-primary">予約する</a>
+        <a href="{{ route('reports.create', ['post_id' => $post->id]) }}" class="btn btn-danger me-3">違反報告</a>
+
+        <!-- ログイン状態に応じてボタンを切り替え -->
+        @auth
+            <!-- ログインしている場合 -->
+            <a href="{{ route('reservations.create', ['post_id' => $post->id]) }}" class="btn btn-primary">予約する</a>  <!-- 予約するボタンでpost_idをreservations.createに渡す -->
+        @else
+            <!-- ログインしていない場合 -->
+            <p class="text-danger mt-3">予約するには<a href="{{ route('login') }}">ログイン</a>が必要です。</p>
+        @endauth
     </div>
 </main>
 

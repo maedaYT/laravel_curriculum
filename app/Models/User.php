@@ -18,7 +18,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'image', 'role',
+        'name', 'email', 'password', 'image', 'role', 'last_access_at', 'last_post_at', 'suspended_posts_count',
     ];
 
     /**
@@ -37,8 +37,18 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_access_at' => 'datetime',
+        'last_post_at' => 'datetime',
     ];
 
     protected $dates = ['deleted_at'];
+
+    /**
+     * リレーション:　ユーザーの投稿を取得
+     */
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
 }
 
